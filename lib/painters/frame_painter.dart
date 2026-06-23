@@ -25,9 +25,9 @@ class FramePainter extends CustomPainter {
   static const double aspectRatio = 2.5 / 3.5;
 
   // 레이아웃 비율 (카드 높이 기준).
-  static const double _borderFrac = 0.025; // 외곽 테두리 두께
-  static const double _titleBarFrac = 0.085; // 상단 타이틀 바 높이
-  static const double _bottomBarFrac = 0.13; // 하단 정보 바 높이
+  static const double _borderFrac = 0.02;   // 외곽 테두리 두께 (얇게)
+  static const double _titleBarFrac = 0.075; // 상단 타이틀 바 높이
+  static const double _bottomBarFrac = 0.18; // 하단 정보 바 높이 (넓힘)
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -59,7 +59,7 @@ class FramePainter extends CustomPainter {
       Radius.circular(h * 0.02),
     );
     final titleBarPaint = Paint()
-      ..color = frameColor.withValues(alpha: 0.18);
+      ..color = frameColor.withValues(alpha: 0.35);
     canvas.drawRRect(titleBarRect, titleBarPaint);
 
     if (title.isNotEmpty) {
@@ -90,7 +90,7 @@ class FramePainter extends CustomPainter {
       Radius.circular(h * 0.02),
     );
     final bottomBarPaint = Paint()
-      ..color = frameColor.withValues(alpha: 0.22);
+      ..color = frameColor.withValues(alpha: 0.40);
     canvas.drawRRect(bottomBarRect, bottomBarPaint);
 
     // 래리티 라벨 (좌측 하단).
@@ -99,12 +99,12 @@ class FramePainter extends CustomPainter {
       rarity.label,
       Offset(
         borderThickness * 2 + h * 0.02,
-        bottomBarTop + bottomBarH * 0.35,
+        bottomBarTop + bottomBarH * 0.3,
       ),
-      h * 0.03,
-      FontWeight.w600,
-      Colors.white.withValues(alpha: 0.9),
-      maxWidth: w * 0.6,
+      h * 0.035,
+      FontWeight.w700,
+      Colors.white.withValues(alpha: 0.95),
+      maxWidth: w * 0.5,
     );
 
     // 서브타이틀 (우측 하단).
@@ -114,12 +114,12 @@ class FramePainter extends CustomPainter {
         subtitle,
         Offset(
           w - borderThickness * 2 - h * 0.02,
-          bottomBarTop + bottomBarH * 0.35,
+          bottomBarTop + bottomBarH * 0.3,
         ),
         h * 0.03,
         FontWeight.normal,
-        Colors.white.withValues(alpha: 0.75),
-        maxWidth: w * 0.35,
+        Colors.white.withValues(alpha: 0.85),
+        maxWidth: w * 0.4,
         align: TextAlign.right,
       );
     }

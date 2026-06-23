@@ -182,8 +182,8 @@ class _HoloCardState extends State<HoloCard>
   Widget _buildCardStack(double w, double h) {
     final data = widget.data;
     final cardRadius = h * 0.035;
-    final photoPadding = h * 0.025;
-    final photoRadius = h * 0.02;
+    final photoPadding = h * 0.015;  // 이미지 영역 넓히기 (여백 감소)
+    final photoRadius = h * 0.015;
 
     return DecoratedBox(
       decoration: BoxDecoration(

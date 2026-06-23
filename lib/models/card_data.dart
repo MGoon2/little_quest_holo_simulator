@@ -15,15 +15,15 @@ extension RarityX on Rarity {
   String get label {
     switch (this) {
       case Rarity.basic:
-        return 'Basic';
+        return 'BSC';
       case Rarity.reverseHolo:
-        return 'Reverse Holo';
+        return 'REV';
       case Rarity.regularHolo:
-        return 'Regular Holo';
+        return 'REG';
       case Rarity.illustrationRare:
-        return 'Illustration Rare';
+        return 'ILL';
       case Rarity.hyperRare:
-        return 'Hyper Rare';
+        return 'HYP';
     }
   }
 

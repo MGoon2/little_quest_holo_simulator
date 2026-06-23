@@ -70,38 +70,16 @@ class PhotoService {
     return dest;
   }
 
-  /// 홀로 텍스처 이미지를 갤러리에서 선택하여 카드 비율(5:7)로 크롭.
-  /// 카드에 맞춰 크롭된 영구 파일 경로를 반환.
-  Future<String?> pickAndCropHoloFromGallery(BuildContext context) async {
+  /// 홀로 텍스처 이미지를 갤러리에서 선택.
+  /// 크롭 없이 원본 그대로 저장 — 렌더링 시 카드에 맞춰 자동 조절됨.
+  Future<String?> pickHoloFromGallery(BuildContext context) async {
     final xfile = await _picker.pickImage(source: ImageSource.gallery);
     if (xfile == null) return null;
     if (!context.mounted) return null;
-    return _cropHoloAndPersist(context, xfile.path);
+    return _persistHoloImage(xfile.path);
   }
 
-  Future<String?> _cropHoloAndPersist(
-    BuildContext context,
-    String sourcePath,
-  ) async {
-    final result = await showMaterialImageCropper(
-      context,
-      imageProvider: FileImage(File(sourcePath)),
-      allowedAspectRatios: const [
-        CropAspectRatio(width: 5, height: 7),
-      ],
-      enabledTransformations: const [
-        Transformation.panAndScale,
-        Transformation.resize,
-      ],
-    );
-    if (result == null) return null;
-
-    final byteData = await result.uiImage.toByteData(
-      format: ui.ImageByteFormat.png,
-    );
-    if (byteData == null) return null;
-    final data = byteData.buffer.asUint8List();
-
+  Future<String?> _persistHoloImage(String sourcePath) async {
     final dir = await getApplicationDocumentsDirectory();
     final holoDir = Directory(p.join(dir.path, 'holo_sheets'));
     if (!await holoDir.exists()) {
@@ -109,9 +87,9 @@ class PhotoService {
     }
     final dest = p.join(
       holoDir.path,
-      'holo_${DateTime.now().microsecondsSinceEpoch}.png',
+      'holo_${DateTime.now().microsecondsSinceEpoch}${p.extension(sourcePath)}',
     );
-    await File(dest).writeAsBytes(data);
+    await File(sourcePath).copy(dest);
     return dest;
   }
 }

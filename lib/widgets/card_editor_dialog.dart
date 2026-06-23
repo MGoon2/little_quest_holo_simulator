@@ -64,7 +64,7 @@ class _CardEditorDialogState extends State<CardEditorDialog> {
   }
 
   Future<void> _pickHoloImage() async {
-    final path = await _photoService.pickAndCropHoloFromGallery(context);
+    final path = await _photoService.pickHoloFromGallery(context);
     if (path != null) setState(() => _holoImagePath = path);
   }
 

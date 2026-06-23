@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -136,7 +137,7 @@ class _ShineLayerState extends State<ShineLayer> {
         }
         return const SizedBox.shrink();
       }
-      return Positioned.fill(
+      return SizedBox.expand(
         child: IgnorePointer(
           child: CustomPaint(
             painter: _ImageHoloPainter(
@@ -154,7 +155,7 @@ class _ShineLayerState extends State<ShineLayer> {
 
     // 셰이더 홀로 모드.
     if (!_shaderLoaded) return const SizedBox.shrink();
-    return Positioned.fill(
+    return SizedBox.expand(
       child: IgnorePointer(
         child: CustomPaint(
           painter: _ShaderPainter(
@@ -195,17 +196,30 @@ class _ImageHoloPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final imgW = image.width.toDouble();
     final imgH = image.height.toDouble();
+
+    // 포인터-중심 거리 (0~1). 원본 CSS 의 --pointer-from-center.
+    final dx = pointerX - 0.5;
+    final dy = pointerY - 0.5;
+    final pfc = math.min(1.0, math.sqrt(dx * dx + dy * dy) * 2);
+
+    // 포인터 거리 기반 밝기 (원본 CSS: brightness(pfc * 0.4 + 0.4)).
+    final brightness = intensity * (pfc * 0.4 + 0.4);
+
+    // 홀로 이미지를 카드 영역에 정확히 맞춰 그린다.
+    // 시차(parallax) 없음 — 홀로는 카드와 함께 움직인다.
+    // 깊이감은 blendMode + 포인터 거리 밝기 변화로만 표현.
     final src = Rect.fromLTWH(0, 0, imgW, imgH);
     final dst = Offset.zero & size;
 
+    // 카드 영역만 클립.
     canvas.save();
     canvas.clipRect(dst);
 
-    // ─── 다중 레이어 합성 (셰이더 홀로와 동일한 방식) ───────
+    // ─── 다중 레이어 합성 ────────────────────────────────────
 
     // [레이어 1] 홀로 PNG 베이스 — colorDodge 로 카드에 합성.
-    // 홀로는 카드에 정확히 맞춰 그린다 (parallax 없음).
-    // 카드가 기울어지면 홀로도 카드와 함께 움직인다.
+    // 홀로는 카드에 정확히 맞춰 그려지며 카드와 함께 움직인다.
+    // 밝기는 포인터 거리에 따라 변화 (빛 반사각 시뮬레이션).
     canvas.drawImageRect(
       image,
       src,
@@ -213,15 +227,16 @@ class _ImageHoloPainter extends CustomPainter {
       Paint()
         ..blendMode = BlendMode.colorDodge
         ..colorFilter = ColorFilter.matrix([
-          intensity, 0, 0, 0, 0,
-          0, intensity, 0, 0, 0,
-          0, 0, intensity, 0, 0,
+          brightness, 0, 0, 0, 0,
+          0, brightness, 0, 0, 0,
+          0, 0, brightness, 0, 0,
           0, 0, 0, opacity, 0,
         ]),
     );
 
     // [레이어 2] 무지개 스펙트럼 오버레이 — 커서 위치에 따라 흐르는 색상.
-    // 홀로 텍스처는 고정하고 색상만 커서를 따라 이동하여 입체감 표현.
+    // 스펙트럼은 카드 전체 영역에 그린다.
+    final cardRect = Offset.zero & size;
     final spectrumShader = LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
@@ -231,9 +246,9 @@ class _ImageHoloPainter extends CustomPainter {
         HSVColor.fromAHSV(0.3 * intensity * opacity, (pointerX * 360 + 180) % 360, 0.9, 0.6).toColor(),
         HSVColor.fromAHSV(0.3 * intensity * opacity, (pointerX * 360 + 270) % 360, 0.9, 0.6).toColor(),
       ],
-    ).createShader(dst);
+    ).createShader(cardRect);
     canvas.drawRect(
-      dst,
+      cardRect,
       Paint()
         ..shader = spectrumShader
         ..blendMode = BlendMode.overlay,
@@ -247,9 +262,9 @@ class _ImageHoloPainter extends CustomPainter {
         Colors.white.withValues(alpha: 0.6 * intensity * opacity),
         Colors.white.withValues(alpha: 0.0),
       ],
-    ).createShader(dst);
+    ).createShader(cardRect);
     canvas.drawRect(
-      dst,
+      cardRect,
       Paint()
         ..shader = glowShader
         ..blendMode = BlendMode.softLight,
@@ -257,7 +272,7 @@ class _ImageHoloPainter extends CustomPainter {
 
     // [레이어 4] 전체 밝기 증가 — plus 로 홀로를 더 밝게.
     canvas.drawRect(
-      dst,
+      cardRect,
       Paint()
         ..color = Colors.white.withValues(alpha: 0.08 * intensity * opacity)
         ..blendMode = BlendMode.plus,

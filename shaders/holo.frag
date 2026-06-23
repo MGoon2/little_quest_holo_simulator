@@ -114,8 +114,25 @@ vec3 spectrum(float h) {
   return hsv2rgb(vec3(fract(h), 0.85, 0.7));
 }
 
+// 포인터-중심 거리 (0~1). 원본 CSS 의 --pointer-from-center.
+// 커서가 중앙=0, 모서리=1. 밝기/콘트라스트 변화에 사용.
+float pointerFromCenter(vec2 pointer) {
+  return clamp(length(pointer - 0.5) * 2.0, 0.0, 1.0);
+}
+
+// 밝기 조정 (원본 CSS filter: brightness() 시뮬레이션).
+vec3 applyBrightness(vec3 color, float brightness) {
+  return color * brightness;
+}
+
+// 콘트라스트 조정 (원본 CSS filter: contrast() 시뮬레이션).
+vec3 applyContrast(vec3 color, float contrast) {
+  return (color - 0.5) * contrast + 0.5;
+}
+
 // 정규 홀로: 수직 빔 + 스캔라인.
-vec3 regularHolo(vec2 uv, vec2 pointer, float time) {
+// pfc = pointer-from-center (0~1), 커서 거리에 따른 밝기 변화.
+vec3 regularHolo(vec2 uv, vec2 pointer, float time, float pfc) {
   // 배경 위치 (회전보다 적게 이동).
   vec2 bg = uv + (pointer - 0.5) * 0.15;
 
@@ -138,11 +155,14 @@ vec3 regularHolo(vec2 uv, vec2 pointer, float time) {
   result = blendColorDodge(result, layer2);
   result = blendColorDodge(result, layer3);
 
+  // 포인터 거리 기반 밝기: 원본 CSS brightness(pfc * 0.4 + 0.4).
+  result = applyBrightness(result, pfc * 0.4 + 0.4);
+
   return result;
 }
 
 // 역홀로: 코스모스(포켓볼) 패턴 + 전체 포일.
-vec3 reverseHolo(vec2 uv, vec2 pointer, float time) {
+vec3 reverseHolo(vec2 uv, vec2 pointer, float time, float pfc) {
   vec2 bg = uv + (pointer - 0.5) * 0.1;
 
   // [레이어 1] 코스모스 점 패턴 (벌집 구조).
@@ -171,11 +191,14 @@ vec3 reverseHolo(vec2 uv, vec2 pointer, float time) {
   result = blendColorDodge(result, layer2);
   result = blendSoftLight(result, layer3);
 
+  // 포인터 거리 기반 밝기.
+  result = applyBrightness(result, pfc * 0.4 + 0.4);
+
   return result;
 }
 
 // 일러스트 레어: 대각선 그래디언트 + 노이즈 텍스처.
-vec3 illustrationRare(vec2 uv, vec2 pointer, float time) {
+vec3 illustrationRare(vec2 uv, vec2 pointer, float time, float pfc) {
   vec2 bg = uv + (pointer - 0.5) * 0.2;
 
   // [레이어 1] 대각선 무지개 그래디언트.
@@ -200,11 +223,14 @@ vec3 illustrationRare(vec2 uv, vec2 pointer, float time) {
   result = blendColorDodge(result, layer3);
   result = blendOverlay(result, layer4);
 
+  // 포인터 거리 기반 밝기 (원본 V Full Art: brightness(pfc*0.4+0.4)).
+  result = applyBrightness(result, pfc * 0.4 + 0.4);
+
   return result;
 }
 
 // 하이퍼 레어: 골드 에칭 + 이중 글리터.
-vec3 hyperRare(vec2 uv, vec2 pointer, float time) {
+vec3 hyperRare(vec2 uv, vec2 pointer, float time, float pfc) {
   vec2 bg = uv + (pointer - 0.5) * 0.15;
 
   // [레이어 1] 골드 베이스 그래디언트.
@@ -234,6 +260,9 @@ vec3 hyperRare(vec2 uv, vec2 pointer, float time) {
   result = blendOverlay(result, layer2);
   result = blendColorDodge(result, layer3);
   result = blendSoftLight(result, layer4);
+
+  // 포인터 거리 기반 밝기 (원본 Secret Rare: brightness(pfc*0.2+0.4)).
+  result = applyBrightness(result, pfc * 0.2 + 0.4);
 
   return result;
 }
@@ -268,15 +297,18 @@ void main() {
   int rarity = int(uRarity);
   vec3 holo = vec3(0.0);
 
+  // 포인터-중심 거리 (0~1). 원본 CSS 의 --pointer-from-center.
+  float pfc = pointerFromCenter(uPointer);
+
   // 래리티별 홀로 패턴 생성.
   if (rarity == 1) {
-    holo = regularHolo(aspectUv, uPointer, uTime);
+    holo = regularHolo(aspectUv, uPointer, uTime, pfc);
   } else if (rarity == 2) {
-    holo = reverseHolo(aspectUv, uPointer, uTime);
+    holo = reverseHolo(aspectUv, uPointer, uTime, pfc);
   } else if (rarity == 3) {
-    holo = illustrationRare(aspectUv, uPointer, uTime);
+    holo = illustrationRare(aspectUv, uPointer, uTime, pfc);
   } else if (rarity == 4) {
-    holo = hyperRare(aspectUv, uPointer, uTime);
+    holo = hyperRare(aspectUv, uPointer, uTime, pfc);
   }
 
   // 커서 글로우 오버레이 (softLight).

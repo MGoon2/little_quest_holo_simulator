@@ -24,7 +24,7 @@ class GlareLayer extends StatelessWidget {
   Widget build(BuildContext context) {
     if (opacity <= 0.001) return const SizedBox.shrink();
 
-    return Positioned.fill(
+    return SizedBox.expand(
       child: IgnorePointer(
         child: Opacity(
           opacity: opacity.clamp(0.0, 1.0),

@@ -182,8 +182,10 @@ class _HoloCardState extends State<HoloCard>
   Widget _buildCardStack(double w, double h) {
     final data = widget.data;
     final cardRadius = h * 0.035;
-    final photoPadding = h * 0.015;  // 이미지 영역 넓히기 (여백 감소)
-    final photoRadius = h * 0.015;
+    // 프레임 테두리 두께(0.02h)와 동일하게 맞춰 이미지가 테두리에 딱 붙도록.
+    final photoPadding = h * 0.02;
+    // 테두리 라운드(cardRadius)보다 약간 작게 → 테두리 곡선에 맞춤.
+    final photoRadius = h * 0.025;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -213,11 +215,12 @@ class _HoloCardState extends State<HoloCard>
               padding: EdgeInsets.all(photoPadding),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(photoRadius),
-                child: CustomPaint(
-                  size: Size.infinite,
-                  painter: _PhotoPainter(
-                    image: _photoImage,
-                    hasError: _photoError,
+                child: SizedBox.expand(
+                  child: CustomPaint(
+                    painter: _PhotoPainter(
+                      image: _photoImage,
+                      hasError: _photoError,
+                    ),
                   ),
                 ),
               ),

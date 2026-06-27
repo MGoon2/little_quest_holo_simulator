@@ -9,6 +9,7 @@ enum Rarity {
   regularHolo, // 정규 홀로 (수직 빔)
   illustrationRare, // 일러스트 레어 (대각선 그래디언트)
   hyperRare, // 하이퍼 레어 (골드 에칭 + 글리터)
+  testHolo, // 테스트용 멀티레이어 홀로 (assets/holo_test/ 8장 합성)
 }
 
 extension RarityX on Rarity {
@@ -24,6 +25,8 @@ extension RarityX on Rarity {
         return 'ILL';
       case Rarity.hyperRare:
         return 'HYP';
+      case Rarity.testHolo:
+        return 'TST';
     }
   }
 
@@ -40,6 +43,8 @@ extension RarityX on Rarity {
         return 0xFFEC4899;
       case Rarity.hyperRare:
         return 0xFFEAB308;
+      case Rarity.testHolo:
+        return 0xFF00BCD4;
     }
   }
 
